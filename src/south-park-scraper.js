@@ -3,9 +3,7 @@
 // Fetch a South Park Episode
 async function fetch_Episode(episode, season_number) {
   // 
-  
 
- let HTTP_ProxyURL = `https://gp-js-test.herokuapp.com/proxy`
   
   const rsp = await fetch( "https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/addon-data/addon-data-en.json" ),
         data = await rsp.json(); 
@@ -21,10 +19,10 @@ async function fetch_Episode(episode, season_number) {
      
      let FinalStreamURLS = []
      for (const link in episodelinks){
-      console.log(atob(episodelinks[link]))
+   //   console.log(atob(episodelinks[link]))
         
-      let fetchlink = atob(episodelinks[link]).replace('http', 'https'); 
-       //
+      let fetchlink = atob(episodelinks[link]).replace('http://', 'https://'); 
+     // console.log(fetchlink)
      const StreamURLs =  await fetch(fetchlink)
        
     
@@ -35,14 +33,19 @@ async function fetch_Episode(episode, season_number) {
        if (StreamData.package.video.item[i].code === "not_found"){
           FinalStreamURLS.push({error: "Not Found or Removed"})
        }
-       if (StreamData.package.video.item[i]['rendition'].src){
+       if (StreamData.package.video.item[i]['rendition']){
+         
+          if (StreamData.package.video.item[i]['rendition'].src){
+         
             FinalStreamURLS.push({url: StreamData.package.video.item[i]['rendition'].src})
-       } else{
+          } else{
        for ( const x in StreamData.package.video.item[i]['rendition']){
         
          FinalStreamURLS.push({url: StreamData.package.video.item[i]['rendition'][x].src})
        }
       }
+            
+       } 
      }
        
       
@@ -64,11 +67,62 @@ async function fetch_Episode(episode, season_number) {
 
 async function southpark_Scraper(episode, season_number)
 {
+
   try {
     let result = await fetch_Episode(episode, season_number);
-   
+   return result
   } catch( err ) {
     console.error( err.message );
   }
+  
 }
-southpark_Scraper('1', 22)  //
+
+// Fetch all episodes for season 
+
+async function fetchSeason(season_number){
+  
+  const rsp = await fetch( "https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/addon-data/addon-data-en.json" ),
+        data = await rsp.json(); 
+  
+  for (const episode in data.seasons[season_number]){
+    for (const x in data.seasons){
+      console.log( data.seasons[season_number][x].episode)
+      
+       southpark_Scraper(data.seasons[season_number][x].episode, season_number)
+    }
+     
+  }
+  
+}
+
+
+// Fetch random episode
+async function fetchRandom(){
+  
+const rsp = await fetch( "https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/addon-data/addon-data-en.json" ),
+        data = await rsp.json(); 
+  
+  
+  function get_random (list) {
+  return list[Math.floor((Math.random()*list.length))];
+}
+
+
+ let season = get_random(data.seasons)
+ 
+  let random = get_random(season)
+  //
+  console.log(random.episode)
+//
+  southpark_Scraper(random.episode, random.season)
+  
+  
+}
+
+
+
+ fetchSeason(0)
+ fetchRandom()
+//southpark_Scraper('2', 0).then(function(search_results) {
+ // console.log(search_results)
+ // });  ////////////
