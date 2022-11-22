@@ -95,7 +95,13 @@ if (!episode){
            // /console.log(foundData)
     }
   }
-  return foundData;
+   if (foundData.length === 0){
+    // nothing was found :( 
+    return "No Results Found"
+  } else{
+   // whooo-hoo! taco-flavaaa kissas 
+    return foundData
+  }
 }
 
 async function southpark_Scraper(episode, season_number)
