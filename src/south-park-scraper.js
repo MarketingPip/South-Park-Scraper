@@ -143,6 +143,12 @@ async function fetchSeason(season_number){
      return {south_park_error: data.error}
     
  }
+ 
+ 
+  if (data.seasons[season_number] == undefined){
+    throw "Error: South Park Season Not Found"
+  }
+  
   
   let season_eps = []
   
