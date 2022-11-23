@@ -1,34 +1,47 @@
+//// NOTES TO DEVS or future self if nobody contributes :C
 
-let module = {}
-module.exports = {
+/// STOP MULTIPLE FETCH CALLS - STORE JSON LOCALLY & Parse.... this thing is making like 20 fetch calls (when calling links for full seasons.)
 
-};
+//// SOUTH PARK SCRAPER 
+export function southpark_scraper(arg1, arg2, arg3)
+{
+  
+  // don't worry it's being awaited... 
+  return callSouthParkScraper(arg1)
+  
+  
+  
 
- // JSON Data to Fetch Episodes Info From (No Streams Included)
- async function fetchData(){
+//// CORE FUNCTIONS   
+async function callSouthParkScraper(arg1){ 
 
-  try {
-    let result = await fetch( "https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/addon-data/addon-data-en.json" )
-   return result.json()
-  } catch( err ) {
-    return {error: err.message };
+    if (arg1.toLowerCase() === "episode"){
+     arg3 = new String(Number(arg3) - 1).toString()
+    return await southpark_scraper_core(arg2, arg3)
   }
   
-}
+    if (arg1.toLowerCase() === "random"){
+    return await fetchRandom()
+  }
+  
+    if (arg1.toLowerCase() === "season"){
+      // GIVE A NOTICE TO USER - this currently takes awhile 
+      // ie - someone can improve this just by storing value retrived for season.... 
+      console.log(`Attempting to fetching episodes for season ${arg2}`)
+      arg2 = new String(Number(arg3) - 1).toString()
+      return await fetchSeason(arg2)
+  }
 
   
-  
-
-
-// Fetch a South Park Episode
+// Function to - Fetch a South Park Episode
 async function fetch_Episode(episode, season_number) {
   // 
 if (!episode){
-  return {south_park_error: "No episode number provided"}
+   throw {south_park_scraper_error: "No episode number provided"}
 }
   
   if (!season_number){
-  return {south_park_error: "No season number provided"}
+   throw {south_park_scraper_error: "No season number provided"}
 }
  
   
@@ -36,7 +49,7 @@ if (!episode){
    
  let data = await fetchData()
  if(data.error){
-     return {south_park_error: data.error}
+      throw {south_park_scraper_error: data.error}
     
  }
  
@@ -97,49 +110,52 @@ if (!episode){
   }
    if (foundData.length === 0){
     // nothing was found :( 
-    return "No Results Found"
+     throw {south_park_scraper_error: "No Results Found"}
   } else{
    // whooo-hoo! taco-flavaaa kissas 
     return foundData
   }
 }
 
-async function southpark_Scraper(episode, season_number)
+// End of Function to - Fetch a South Park Episode
+
+
+
+
+/// Function to find episode by (episode & season number)
+async function southpark_scraper_core(episode, season_number)
 {
   
   try {
     let result = await fetch_Episode(episode, season_number);
    return result
   } catch( err ) {
-    console.error( err.message );
+    return err;
   }
   
   
 }
-
-
-
-async function southpark_Core(arg1, arg2, arg3)
-{
-
-  if (arg1.toLowerCase() === "episode"){
-    return await southpark_Scraper(arg2, arg3)
-  }
   
-    if (arg1.toLowerCase() === "random"){
-    return await fetchRandom()
-  }
   
-    if (arg1.toLowerCase() === "season"){
-      return await fetchSeason(arg2)
+
+ // Function to fetch JSON Data for Fetch Episodes Info From (No Streams Included)
+ async function fetchData(){
+
+  try {
+    let result = await fetch( "https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/addon-data/addon-data-en.json" )
+   return result.json()
+  } catch( err ) {
+    throw {south_park_scraper_error: err.message };
   }
   
 }
 
+ /// End of Function to fetch JSON Data for Fetch Episodes ///
+  
+  
 
 
-
-// Fetch all episodes for season //
+// Fetch all episodes for season #
 
 async function fetchSeason(season_number){
   
@@ -152,7 +168,7 @@ async function fetchSeason(season_number){
  
  
   if (data.seasons[season_number] == undefined){
-    throw "Error: South Park Season Not Found"
+  throw {south_park_scraper_error: "South Park Season Not Found"}
   }
   
   
@@ -161,7 +177,7 @@ async function fetchSeason(season_number){
   for (const episode in data.seasons[season_number]){
     for (const x in data.seasons){
       
-      let results = await southpark_Scraper(data.seasons[season_number][x].episode, season_number)
+      let results = await southpark_scraper_core(data.seasons[season_number][x].episode, season_number)
       
       if (results.south_park_error){
        return {south_park_error: results.south_park_error}
@@ -180,16 +196,22 @@ async function fetchSeason(season_number){
   }
    
 }
+ 
+  
+// END OF - Fetch all episodes for season # ///   
+  
+  
 
 
-// Fetch random episode
+
+/// Fetch random episode ///
 async function fetchRandom(){
   
 
    
  let data = await fetchData()
  if(data.error){
-     return {south_park_error: data.error}
+      throw {south_park_scraper_error: data.error}
     
  }
  
@@ -207,19 +229,21 @@ async function fetchRandom(){
   //
  // console.log(random.episode)
 //
- let random_ep = await southpark_Scraper(random.episode, random.season)
+ let random_ep = await southpark_scraper_core(random.episode, random.season)
   
   return random_ep
   
   
 }
 
-
-
-
- southpark_Core("random", "1", "1").then(function(search_results) {
-  console.log(search_results)
- });  //////////////////////////
-
-// Export it to make it available outside
-module.exports.southpark_Core = southpark_Core;
+  
+/// End of fetch all random episode ///  
+  
+  
+  
+}
+/// END OF CORE FUNCTIONS  
+  
+  
+}
+//// END OF SOUTH PARK SCRAPER /// 
