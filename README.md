@@ -1,5 +1,8 @@
 # South-Park-Scraper.js
 
+![image](https://user-images.githubusercontent.com/86180097/209031917-ea870de8-c4b5-4856-b13f-d83ff5f70573.png)
+
+
 A pure JavaScript library for scraping free streams / free episodes of South Park - works in the browser!
 
 ## Example and usage 
