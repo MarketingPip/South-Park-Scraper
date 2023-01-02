@@ -63,14 +63,14 @@ async function callSouthParkScraper(arg2){
       // GIVE A NOTICE TO USER - this currently takes awhile 
       // ie - someone can improve this just by storing value retrived for season.... 
       console.log(`Attempting to fetching episodes for season ${arg3}`)
-      console.log(arg3)
+  //    console.log(arg3)
 
       return await fetchSeason(arg3)
   }
 
   
 // Function to - Fetch a South Park Episode
-async function fetch_Episode(episode, season_number) {
+async function fetch_Episode(season_number, episode) {
   // 
 if (!episode){
    throw {south_park_scraper_error: "No episode number provided"}
@@ -79,7 +79,7 @@ if (!episode){
   if (!season_number){
    throw {south_park_scraper_error: "No season number provided"}
 } else{
-  console.log(season_number)
+  //console.log(season_number)
   season_number = new String(Number(season_number) - 1).toString()
 }
  
@@ -93,10 +93,10 @@ if (!episode){
  
   
   let foundData = []
-  console.log(season_number)
+  //console.log(season_number)
   let seasons = data.seasons[season_number]
-   if(season_number > data.seasons.length ) {
-throw {south_park_scraper_error: `No season found for season ${season_number}`}
+   if(data.seasons[season_number] === undefined ) {
+throw {south_park_scraper_error: `South Park Season Not Found`}
       }
    
   for (const episodes in seasons){
@@ -208,12 +208,11 @@ async function fetchSeason(season_number){
      return {south_park_error: data.error}
     
  }
- console.log(season_number)
- 
-  if (data.seasons[season_number] == undefined){
+
+  if (data.seasons[season_number -1] == undefined){
   throw {south_park_scraper_error: "South Park Season Not Found"}
   }
-  
+console.log(season_number)  
   
   let season_eps = []
   
@@ -229,7 +228,7 @@ async function fetchSeason(season_number){
       }
     
       if (parseInt(x) === data.seasons[season_number].length -1){
-     
+   //  console.log("nooo")
          return season_eps
       }
       
@@ -293,10 +292,10 @@ async function fetchRandom(){
 
 async function Fetch_Season_1_Episode_1() {
   try {
-     let episode_details = southpark_scraper("en", "episode", "2", "2")
+     let episode_details = southpark_scraper("en", "random", "0", "1")
      console.log(await episode_details)
   } catch (err) {
-  //  console.error(err);
+    console.error(err);
   }
 }
-Fetch_Season_1_Episode_1()
+Fetch_Season_1_Episode_1() 
