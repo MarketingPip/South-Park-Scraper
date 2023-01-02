@@ -63,7 +63,8 @@ async function callSouthParkScraper(arg2){
       // GIVE A NOTICE TO USER - this currently takes awhile 
       // ie - someone can improve this just by storing value retrived for season.... 
       console.log(`Attempting to fetching episodes for season ${arg3}`)
-      arg3 = new String(Number(arg4) - 1).toString()
+      console.log(arg3)
+
       return await fetchSeason(arg3)
   }
 
@@ -78,12 +79,12 @@ if (!episode){
   if (!season_number){
    throw {south_park_scraper_error: "No season number provided"}
 } else{
+  console.log(season_number)
   season_number = new String(Number(season_number) - 1).toString()
 }
  
   
-  
-   
+
  let data = await fetchData()
  if(data.error){
       throw {south_park_scraper_error: data.error}
@@ -92,7 +93,12 @@ if (!episode){
  
   
   let foundData = []
+  console.log(season_number)
   let seasons = data.seasons[season_number]
+   if(season_number > data.seasons.length ) {
+throw {south_park_scraper_error: `No season found for season ${season_number}`}
+      }
+   
   for (const episodes in seasons){
     if (episode === seasons[episodes].episode){
  
@@ -202,7 +208,7 @@ async function fetchSeason(season_number){
      return {south_park_error: data.error}
     
  }
- 
+ console.log(season_number)
  
   if (data.seasons[season_number] == undefined){
   throw {south_park_scraper_error: "South Park Season Not Found"}
@@ -284,3 +290,13 @@ async function fetchRandom(){
   
 }
 //// END OF SOUTH PARK SCRAPER /// 
+
+async function Fetch_Season_1_Episode_1() {
+  try {
+     let episode_details = southpark_scraper("en", "episode", "2", "2")
+     console.log(await episode_details)
+  } catch (err) {
+  //  console.error(err);
+  }
+}
+Fetch_Season_1_Episode_1()
