@@ -5,6 +5,26 @@
  */
 
 
+
+let list = [
+    {
+        id: 1,
+        name: 'John',
+        age: 32
+    },
+    {
+        id: 2,
+        name: 'Alice',
+        age: 25
+    }
+];
+
+function search(num) {
+    return list.find(el => el.id === num || el.id === parseInt(num));
+};
+
+console.log(search(0)); // {id: 1, name: 'John', age: 32}
+
 /* NOTES TO DEVS - or future self if nobody contributes :C
 * STOP MULTIPLE FETCH CALLS - STORE JSON LOCALLY & Parse.... this thing is making like 20 fetch calls (when calling links for full seasons.)
 */
