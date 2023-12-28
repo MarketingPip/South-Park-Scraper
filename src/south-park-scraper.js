@@ -18,6 +18,7 @@ let list = [
         age: 25
     }
 ];
+let cache = null;
 
 function search(num) {
     return list.find(el => el.id === num || el.id === parseInt(num));
@@ -184,7 +185,6 @@ throw {south_park_scraper_error: `No season found for season ${season_number}`}
 
 
 
-
 /// Function to find episode by (episode & season number)
 async function southpark_scraper_core(episode, season_number)
 {
@@ -202,16 +202,27 @@ async function southpark_scraper_core(episode, season_number)
   
 
  // Function to fetch JSON Data for Fetch Episodes Info From (No Streams Included)
- async function fetchData(){
+
+
+async function fetchData() {
+  // Check if data is already in the cache
+  if (cache) {
+    return cache;
+  }
 
   try {
-    let result = await fetch( "https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/addon-data/addon-data-en.json" )
-   return result.json()
-  } catch( err ) {
-    throw {south_park_scraper_error: err.message };
+    let result = await fetch("https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/addon-data/addon-data-en.json");
+    let data = await result.json();
+
+    // Cache the data for future use
+    cache = data;
+
+    return data;
+  } catch (err) {
+    throw { south_park_scraper_error: err.message };
   }
-  
 }
+
 
  /// End of Function to fetch JSON Data for Fetch Episodes ///
   
@@ -220,51 +231,36 @@ async function southpark_scraper_core(episode, season_number)
 
 // Fetch all episodes for season #
 
-async function fetchSeason(season_number){
-   //
-  
-  season_number = new String(Number(season_number) - 1).toString()
-  
- console.log("gg" + season_number)
- let data = await fetchData()
- if(data.error){
-     return {south_park_error: data.error}
-    
- }
-// console.log(data.seasons[season_number - 1])
- console.log(data.seasons)//
-  if (data.seasons[season_number] == undefined){
-  throw {south_park_scraper_error: "South Park Season Not Found"}
-  }
-  
-  
-  if(data.seasons[season_number] == undefined){
-     season_number = season_number 
+async function fetchSeason(seasonNumber){
+  try {
+        const data = await fetchData();
+        if (data.error) {
+            return { southParkError: data.error };
+        }
+
+        // Convert seasonNumber to a number and check if it's valid
+        seasonNumber = Number(seasonNumber);
+        if (isNaN(seasonNumber) || seasonNumber < 1 || seasonNumber > data.seasons.length) {
+             throw new Error("South Park Season Not Found")
+        }
+
+        // Adjust seasonNumber for array indexing
+        const adjustedSeasonNumber = seasonNumber - 1;
+
+        const seasonEps = [];
+        for (const episode of data.seasons[adjustedSeasonNumber]) {
+            const results = await fetch_Episode(episode.episode, seasonNumber);
+            if (results.southParkError) {
+                return { southParkError: results.southParkError };
+            } else {
+                seasonEps.push(results);
+            }
+        }
+
+        return seasonEps;
+    } catch (err) {
+        return { southParkError: err.message };
     }
-  
-  
-  let season_eps = []
-  
-  for (const episode in data.seasons[season_number]){
-    for (const x in data.seasons){
-      
-      let results = await southpark_scraper_core(data.seasons[season_number][x].episode, season_number)
-      
-      if (results.south_park_error){
-       return {south_park_error: results.south_park_error}
-      } else{
-        season_eps.push(results)
-      }
-    
-      if (parseInt(x) === data.seasons[season_number].length -1){
-     
-         return season_eps
-      }
-      
-    
-    }
-     
-  }
    
 }
  
@@ -318,7 +314,7 @@ async function fetchRandom(){
 
 async function Fetch_Season_1_Episode_1() {
   try {
-     let episode_details = southpark_scraper("en", "episode", "1", "10") ////
+     let episode_details = southpark_scraper("en", "episode", "10", "0") ////
      console.log(await episode_details)
   } catch (err) {
     console.error(err);//
