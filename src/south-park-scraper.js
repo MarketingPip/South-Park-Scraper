@@ -6,198 +6,156 @@
 
 
 
-let list = [
-    {
-        id: 1,
-        name: 'John',
-        age: 32
-    },
-    {
-        id: 2,
-        name: 'Alice',
-        age: 25
-    }
-];
-let cache = null;
-
-function search(num) {
-    return list.find(el => el.id === num || el.id === parseInt(num));
-};
-
-console.log(search(0)); // {id: 1, name: 'John', age: 32}
-
-/* NOTES TO DEVS - or future self if nobody contributes :C
-* STOP MULTIPLE FETCH CALLS - STORE JSON LOCALLY & Parse.... this thing is making like 20 fetch calls (when calling links for full seasons.)
-*/
-
 //// SOUTH PARK SCRAPER 
- function southpark_scraper(arg1, arg2, arg3, arg4)
-{
-  
-  // don't worry it's being awaited... 
-  return callSouthParkScraper(arg2)
-  
-  
-  
+let cache = null;
+// Constants
+const SUPPORTED_LANGUAGES = ["se", "en", "lat", "it", "eu", "es", "de", "br"];
+const EPISODE_TYPE = "episode";
+const RANDOM_TYPE = "random";
+const SEASON_TYPE = "season";  
 
 //// CORE FUNCTIONS   
-async function callSouthParkScraper(arg2){ 
-
-   if (!arg1){
-   return {south_park_scraper_error: "Language code was not provided"}
-  }else{
-    arg1 = arg1.toLowerCase()
-    
-    let supportLangs = ["se", "en", "lat", "it", "eu", "es", "de", "br"]
-    let langSupported = "false";
-    for (const lang in supportLangs){
-        if (arg1 == supportLangs[lang]){
-          langSupported = "true";
+// Main South Park Scraper function
+async function southParkScraper(language, type, arg3, arg4) {
+    try {
+        if (!language || !isLanguageSupported(language.toLowerCase())) {
+            handleError("Invalid or unsupported language code");
         }
+
+        if (!type) {
+            handleError("Type was not provided; must be 'episode', 'season', or 'random'");
+        }
+
+        type = type.toLowerCase();
+
+        switch (type) {
+            case EPISODE_TYPE:
+                console.log(`Attempting to fetch episode ${arg3}, season ${arg4}`);
+                return await fetchEpisode(arg3, arg4);
+            case RANDOM_TYPE:
+                console.log("Attempting to fetch a random episode");
+                return await fetchRandomEpisode();
+            case SEASON_TYPE:
+                console.log(`Attempting to fetch episodes for season ${arg3}`);
+                return await fetchSeasonEpisodes(arg3);
+            default:
+                handleError("Invalid type; must be 'episode', 'season', or 'random'");
+        }
+    } catch (err) {
+        return { southParkScraperError: err.message };
     }
-    
-   if (langSupported != "true"){
-     return {south_park_scraper_error: `${arg1} language code is not supported`}
-   }
-    
-    
-  }
-  
-  if (!arg2){
-   return {south_park_scraper_error: "Type was not provided, must be episode, season or random"}
-  }
-  
-  arg2 = arg2.toLowerCase() 
-  
-    if (arg2 === "episode"){
-    console.log(`Attempting to fetching episode ${arg3}, season ${arg3}`)
-    return await southpark_scraper_core(arg3, arg4)
-  }
-  
-    if (arg2 === "random"){
-         // GIVE A NOTICE TO USER - this currently takes awhile 
-    console.log(`Attempting to fetching random episode`)
-    return await fetchRandom()
-  }
-  
-    if (arg2 === "season"){
-      // GIVE A NOTICE TO USER - this currently takes awhile 
-      // ie - someone can improve this just by storing value retrived for season.... 
-      console.log(`Attempting to fetching episodes for season ${arg3}`)
-      console.log()
+}
+ 
 
-      return await fetchSeason(arg3)
-  }
+// Function to check if a language code is supported
+function isLanguageSupported(lang) {
+    return SUPPORTED_LANGUAGES.includes(lang);
+}
 
-  
 // Function to - Fetch a South Park Episode
-async function fetch_Episode(episode, season_number) {
-  // 
-if (!episode){
-   throw {south_park_scraper_error: "No episode number provided"}
-}
-  
-  if (!season_number){
-   throw {south_park_scraper_error: "No season number provided"}
-} else{
-  console.log(season_number)
-  season_number = new String(Number(season_number) - 1).toString()
-}
- 
-  
+async function fetchEpisode(episode, season_number) {
+  if (!episode) {
+    throw { south_park_scraper_error: "No episode number provided" };
+  }
 
- let data = await fetchData()
- if(data.error){
-      throw {south_park_scraper_error: data.error}
-    
- }
- 
-  
-  let foundData = []
-  console.log(season_number)
-  let seasons = data.seasons[season_number]
-   if(season_number > data.seasons.length ) {
-throw {south_park_scraper_error: `No season found for season ${season_number}`}
-      }
-   
-  for (const episodes in seasons){
-    if (episode === seasons[episodes].episode){
- 
-     let episodelinks = seasons[episodes].mediagen
-     
-     let DecodedLinks = [] 
-     
-     let FinalStreamURLS = []
-     for (const link in episodelinks){
-   
-      let fetchlink = atob(episodelinks[link]).replace('http://', 'https://'); 
-   
-       
-       // Look for the stream / m3u urls..
-     const StreamURLs =  await fetch(fetchlink)
-       
-    
-     
-      let StreamData = await StreamURLs.json();
-     
-     for (const i in StreamData.package.video.item){
-       /// stream was removed or banned in area etc..
-       if (StreamData.package.video.item[i].code === "not_found"){
-        foundData.push({season: seasons[episodes].season, episode: seasons[episodes].episode, title: seasons[episodes].title, description: seasons[episodes].details, season_cover_image: `https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/master/imgs/${seasons[episodes].season}.jpg`,  preview_image: seasons[episodes].image}, {error: "Not Found or Removed"})
-         return foundData
-       }
-       
-       // valid stream links
-       if (StreamData.package.video.item[i]['rendition']){
-         
-          if (StreamData.package.video.item[i]['rendition'].src){
-         
-            FinalStreamURLS.push({url: StreamData.package.video.item[i]['rendition'].src})
-          } else{
-       for ( const x in StreamData.package.video.item[i]['rendition']){
-        
-         FinalStreamURLS.push({url: StreamData.package.video.item[i]['rendition'][x].src})
-       }
-      }
-            
-       } 
-     }
+  if (!season_number) {
+    throw { south_park_scraper_error: "No season number provided" };
+  } else {
+    season_number = String(Number(season_number) - 1).toString();
+  }
 
+  try {
+    const data = await fetchData();
 
-     }
-      
-        foundData.push({season: seasons[episodes].season, episode: seasons[episodes].episode, title: seasons[episodes].title, description: seasons[episodes].details,  season_cover_image: `https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/master/imgs/${seasons[episodes].season}.jpg`, preview_image: seasons[episodes].image})
-      
-      foundData.push({stream_urls: FinalStreamURLS})
-           // /console.log(foundData)
+    if (data.error) {
+      throw { south_park_scraper_error: data.error };
     }
-  }
-   if (foundData.length === 0){
-    // nothing was found :( 
-     throw {south_park_scraper_error: "No Results Found"}
-  } else{
-   // whooo-hoo! taco-flavaaa kissas 
-    return foundData
+
+    if (season_number >= data.seasons.length) {
+      throw {
+        south_park_scraper_error: `No season found for season ${season_number}`,
+      };
+    }
+
+    const foundData = [];
+    const seasons = data.seasons[season_number];
+
+    const episodePromises = [];
+
+    for (const episodes in seasons) {
+      console.log(seasons[epsiodes])
+      if (episode === seasons[episodes].episode) {
+        const episodelinks = seasons[episodes].mediagen;
+        const finalStreamURLs = [];
+
+        episodelinks.forEach((link) => {
+          const fetchlink = atob(link).replace("http://", "https://");
+          episodePromises.push(fetch(fetchlink).then((res) => res.json()));
+        });
+
+        const streamDatas = await Promise.all(episodePromises);
+
+        streamDatas.forEach((streamData) => {
+          for (const i in streamData.package.video.item) {
+            if (streamData.package.video.item[i].code === "not_found") {
+              foundData.push({
+                season: seasons[episodes].season,
+                episode: seasons[episodes].episode,
+                title: seasons[episodes].title,
+                description: seasons[episodes].details,
+                season_cover_image: `https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/master/imgs/${seasons[episodes].season}.jpg`,
+                preview_image: seasons[episodes].image,
+              },
+              { error: "Not Found or Removed" });
+              return foundData;
+            }
+
+            if (streamData.package.video.item[i]["rendition"]) {
+              if (streamData.package.video.item[i]["rendition"].src) {
+                finalStreamURLs.push({
+                  url: streamData.package.video.item[i]["rendition"].src,
+                });
+              } else {
+                for (const x in streamData.package.video.item[i]["rendition"]) {
+                  finalStreamURLs.push({
+                    url: streamData.package.video.item[i]["rendition"][x].src,
+                  });
+                }
+              }
+            }
+          }
+        });
+
+        foundData.push({
+          season: seasons[episodes].season,
+          episode: seasons[episodes].episode,
+          title: seasons[episodes].title,
+          description: seasons[episodes].details,
+          season_cover_image: `https://raw.githubusercontent.com/wargio/plugin.video.southpark_unofficial/master/imgs/${seasons[episodes].season}.jpg`,
+          preview_image: seasons[episodes].image,
+        });
+
+        foundData.push({ stream_urls: finalStreamURLs });
+      }
+    }
+
+    if (foundData.length === 0) {
+      throw { south_park_scraper_error: "No Results Found" };
+    } else {
+      return foundData;
+    }
+  } catch (error) {
+    // Handle other errors, log, or rethrow if necessary
+    throw error;
   }
 }
+
 
 // End of Function to - Fetch a South Park Episode
 
 
 
-/// Function to find episode by (episode & season number)
-async function southpark_scraper_core(episode, season_number)
-{
-  
-  try {
-    let result = await fetch_Episode(episode, season_number);
-   return result
-  } catch( err ) {
-    return err;
-  }
-  
-  
-}
+
   
   
 
@@ -231,7 +189,7 @@ async function fetchData() {
 
 // Fetch all episodes for season #
 
-async function fetchSeason(seasonNumber){
+async function fetchSeasonEpisodes(seasonNumber){
   try {
         const data = await fetchData();
         if (data.error) {
@@ -249,7 +207,7 @@ async function fetchSeason(seasonNumber){
 
         const seasonEps = [];
         for (const episode of data.seasons[adjustedSeasonNumber]) {
-            const results = await fetch_Episode(episode.episode, seasonNumber);
+            const results = await fetchEpisode(episode.episode, seasonNumber);
             if (results.southParkError) {
                 return { southParkError: results.southParkError };
             } else {
@@ -272,7 +230,7 @@ async function fetchSeason(seasonNumber){
 
 
 /// Fetch random episode ///
-async function fetchRandom(){
+async function fetchRandomEpisode(){
   
 
    
@@ -307,17 +265,16 @@ async function fetchRandom(){
 /// End of fetch all random episode ///  
   
   
-  
-}
-}
+
+
 //// END OF SOUTH PARK SCRAPER /// 
 
 async function Fetch_Season_1_Episode_1() {
   try {
-     let episode_details = southpark_scraper("en", "episode", "10", "0") ////
+     let episode_details = southParkScraper("en", "season", "2", "1") ////
      console.log(await episode_details)
   } catch (err) {
-    console.error(err);//
+    console.error(err.message);//
   }
 }
-Fetch_Season_1_Episode_1() 
+//Fetch_Season_1_Episode_1() 
